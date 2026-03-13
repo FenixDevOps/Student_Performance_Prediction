@@ -76,7 +76,7 @@ pip install -r requirements.txt
 streamlit run app/streamlit_app.py
 ```
 
-The app will open automatically at **http://localhost:8501**.
+The app will open automatically at **[http://localhost:8501](https://student-performance-prediction-manigoud.streamlit.app/)**.
 
 > **First launch**: The app automatically generates the dataset and trains the model —
 > this takes ~30 seconds and only happens once.
