@@ -1,44 +1,41 @@
-# Deployment Guide - Student Performance Analytics
+# Deployment Guide - Student Performance Analytics (PostgreSQL Edition)
 
-Follow these steps to deploy your application to the cloud using **Render**.
+Follow these steps to deploy your application to the cloud using **Render** with permanent storage.
 
 ## 1. Prepare Your Repository
-Ensure your project is on GitHub. If not, initialize a git repository and push it:
+Ensure your project is on GitHub:
 ```bash
-git init
 git add .
-git commit -m "Initial commit for deployment"
-git remote add origin YOUR_GITHUB_REPO_URL
-git push -u origin main
+git commit -m "Migrate to PostgreSQL for persistent cloud storage"
+git push origin main
 ```
 
-## 2. Deploy to Render
-1.  **Sign up/Log in**: Go to [Render](https://render.com/) and connect your GitHub account.
-2.  **Create a New Web Service**: Click **New +** and select **Web Service**.
-3.  **Choose Repository**: Select your `Student_Performance_Prediction` repository.
-4.  **Configure Settings**:
-    *   **Name**: `student-performance-analytics` (or any name you like)
-    *   **Runtime**: `Python 3`
+## 2. Create a Free PostgreSQL Database on Render
+1.  **New PostgreSQL**: On the [Render Dashboard](https://dashboard.render.com/), click **New +** -> **PostgreSQL**.
+2.  **Config**:
+    *   **Name**: `student-db`
+    *   **Database**: `student_history`
+    *   **Tier**: `Free`
+3.  **Click Create**. Wait for it to become **"Available"**.
+4.  **Copy URL**: Look for the **Internal Database URL** (e.g., `postgres://user:pass@host/db`).
+
+## 3. Deploy the Web Service
+1.  **New Web Service**: Click **New +** -> **Web Service**.
+2.  **Choose Repository**: Select `Student_Performance_Prediction`.
+3.  **Config Settings**:
     *   **Build Command**: `pip install -r requirements.txt`
     *   **Start Command**: `gunicorn --chdir app app:app`
-5.  **Environment Variables**:
+4.  **Environment Variables**:
     *   Click **Advanced** -> **Add Environment Variable**.
-    *   Add `PYTHON_VERSION` = `3.10` (or your local version).
-6.  **Persistent Disk (Crucial for SQLite)**:
-    *   Scroll down to **Disks**.
-    *   Click **Add Disk**.
-    *   **Name**: `student-db`
-    *   **Mount Path**: `/opt/render/project/src/database`
-    *   **Size**: `1 GB` (Free tier)
-    *   *This ensures your student records stay saved even after the server restarts.*
+    *   **Key**: `DATABASE_URL`
+    *   **Value**: Paste your **Internal Database URL** from Step 2.
+5.  **Submit**: Click **Create Web Service**.
 
-## 3. Verify Deployment
-Once Render finishes building, you will get a URL (e.g., `https://student-performance-analytics.onrender.com`).
-- Navigate to the URL.
-- Test a prediction.
-- Verify that the data is saved in the **Student History** tab.
+## 4. Why This is Better
+- **Persistent Data**: Unlike SQLite on the free tier, PostgreSQL stores your student records in a separate, dedicated database. Even if the web server restarts, your data stays safe.
+- **Dual Mode**: The app still works with your local `student_history.db` for offline testing!
 
 ---
 
-> [!IMPORTANT]
-> Since this is a Python app with a SQLite database, using a **Persistent Disk** on Render is highly recommended. Otherwise, your data will be reset every time the app redeploys.
+> [!NOTE]
+> Render's free PostgreSQL databases expire after **90 days**. If you want a forever-free database, consider using **Supabase** or another external provider, but Render is the easiest for now.
