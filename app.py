@@ -4,7 +4,8 @@ import sys
 # ── LOGGING & ERROR CATCHING (TOP OF FILE) ──────────────────────────
 try:
     print(">>> APP STARTING: INITIALIZING PATHS...")
-    ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    # Now that we are in root, ROOT is just the current directory
+    ROOT = os.path.abspath(os.path.dirname(__file__))
     if ROOT not in sys.path:
         sys.path.insert(0, ROOT)
     print(f">>> ROOT PATH SET TO: {ROOT}")
