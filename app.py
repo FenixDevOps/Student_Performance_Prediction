@@ -15,21 +15,6 @@ except Exception as e:
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 
-try:
-    from src.predict import predict_single, load_meta, FEATURE_COLS
-    from src.recommendations import analyse
-    from src.db_manager import (
-        init_db, insert_prediction, search_records,
-        get_student_trend, get_summary_stats, delete_record
-    )
-    from src.train_model import train, MODEL_PATH
-    print(">>> ALL MODULES IMPORTED SUCCESSFULLY.")
-except Exception as e:
-    print(">>> MODULE IMPORT ERROR:")
-    print(str(e))
-    import traceback
-    traceback.print_exc()
-
 app = Flask(__name__, 
             static_folder='static',
             template_folder='templates')
@@ -54,7 +39,6 @@ except Exception as e:
     import traceback
     traceback.print_exc()
     print("-" * 30)
-    # Don't exit here, let Flask try to start so we can see the logs
 
 @app.route('/')
 def index():

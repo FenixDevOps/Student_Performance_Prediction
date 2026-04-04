@@ -197,3 +197,17 @@ def delete_record(record_id: int) -> None:
     conn.commit()
     cur.close()
     conn.close()
+
+def get_student_trend() -> list[dict]:
+    """Returns the last 10 predictions for trend analysis."""
+    init_db()
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor) if DATABASE_URL else conn.cursor()
+    
+    cur.execute("SELECT timestamp, predicted_score FROM predictions ORDER BY id ASC LIMIT 10")
+    rows = cur.fetchall()
+    
+    results = [dict(r) for r in rows]
+    cur.close()
+    conn.close()
+    return results
