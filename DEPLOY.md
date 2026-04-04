@@ -1,41 +1,29 @@
-# Deployment Guide - Student Performance Analytics (PostgreSQL Edition)
+# Deployment Guide - Student Performance Analytics (Final Edition)
 
-Follow these steps to deploy your application to the cloud using **Render** with permanent storage.
+Your project has been simplified to a **flat structure** (no subfolders for the main app) to ensure 100% compatibility with Render's Free tier.
 
-## 1. Prepare Your Repository
-Ensure your project is on GitHub:
-```bash
-git add .
-git commit -m "Migrate to PostgreSQL for persistent cloud storage"
-git push origin main
-```
+## 1. Sync Your Code
+I have already pushed these changes to your GitHub! 
 
-## 2. Create a Free PostgreSQL Database on Render
-1.  **New PostgreSQL**: On the [Render Dashboard](https://dashboard.render.com/), click **New +** -> **PostgreSQL**.
-2.  **Config**:
-    *   **Name**: `student-db`
-    *   **Database**: `student_history`
-    *   **Tier**: `Free`
-3.  **Click Create**. Wait for it to become **"Available"**.
-4.  **Copy URL**: Look for the **Internal Database URL** (e.g., `postgres://user:pass@host/db`).
+## 2. Updated Render Settings
+Go to your **Web Service** on Render and ensure these fields match exactly:
 
-## 3. Deploy the Web Service
-1.  **New Web Service**: Click **New +** -> **Web Service**.
-2.  **Choose Repository**: Select `Student_Performance_Prediction`.
-3.  **Config Settings**:
-    *   **Build Command**: `pip install -r requirements.txt`
-    *   **Start Command**: `gunicorn --chdir app app:app`
-4.  **Environment Variables**:
-    *   Click **Advanced** -> **Add Environment Variable**.
-    *   **Key**: `DATABASE_URL`
-    *   **Value**: Paste your **Internal Database URL** from Step 2.
-5.  **Submit**: Click **Create Web Service**.
+| Field | Value |
+| :--- | :--- |
+| **Build Command** | `pip install -r requirements.txt` |
+| **Start Command** | `gunicorn app:app` |
 
-## 4. Why This is Better
-- **Persistent Data**: Unlike SQLite on the free tier, PostgreSQL stores your student records in a separate, dedicated database. Even if the web server restarts, your data stays safe.
-- **Dual Mode**: The app still works with your local `student_history.db` for offline testing!
+## 3. Environment Variable (Crucial)
+Ensure you have added your Supabase URL in the **Environment** section:
+- **Key**: `DATABASE_URL`
+- **Value**: `postgresql://postgres:Soumya%401820@db.hoeochjdnluzymbdnsza.supabase.co:5432/postgres`
+  *(Note: I encoded the `@` in your password as `%40` to prevent connection errors).*
 
 ---
 
-> [!NOTE]
-> Render's free PostgreSQL databases expire after **90 days**. If you want a forever-free database, consider using **Supabase** or another external provider, but Render is the easiest for now.
+### **Why this fixes the "Status 1" error:**
+-   **No more folder path issues**: By moving `app.py` to the main folder, Render can find it instantly.
+-   **Stable Python**: I added a `runtime.txt` file to force Render to use Python 3.11.
+-   **Diagnostic Logs**: If it still fails, the logs will now show a very clear message starting with **`>>>`** explaining the exact line that failed.
+
+**You are ready to launch! Just update the Start Command on Render and it should work.**
