@@ -21,14 +21,26 @@ app = Flask(__name__,
             template_folder='templates')
 CORS(app)
 
-# Initialize database on startup
-init_db()
+# Global metadata and Initialization
+model_meta = {}
+try:
+    print("Pre-initialization: Checking database...")
+    init_db()
+    print("Database initialized successfully.")
 
-# Global metadata
-model_meta = load_meta()
-if not model_meta and not os.path.exists(MODEL_PATH):
-    print("Model not found. Training model...")
-    model_meta = train()
+    model_meta = load_meta()
+    if not model_meta and not os.path.exists(MODEL_PATH):
+        print("Model not found. Training model locally...")
+        model_meta = train()
+    print("Model loaded/trained successfully.")
+except Exception as e:
+    print("-" * 30)
+    print("CRITICAL STARTUP ERROR:")
+    print(str(e))
+    import traceback
+    traceback.print_exc()
+    print("-" * 30)
+    # Don't exit here, let Flask try to start so we can see the logs
 
 @app.route('/')
 def index():
