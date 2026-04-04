@@ -1,8 +1,8 @@
 {
   "model_name": "Linear Regression",
-  "rmse": 5.2045,
-  "mae": 4.1576,
-  "r2": 0.7422,
+  "rmse": 5.2038,
+  "mae": 4.1564,
+  "r2": 0.77,
   "feature_cols": [
     "attendance",
     "previous_gpa",
@@ -14,33 +14,33 @@
     "practice_problems"
   ],
   "feature_importances": {
-    "attendance": 0.08577530738675905,
-    "previous_gpa": 0.16268706924568457,
-    "study_hours": 0.2089360255969533,
-    "assignment_completion": 0.08985236343181917,
-    "participation_score": 0.06826878355917872,
-    "sleep_hours": 0.026810197044674175,
-    "practice_test_score": 0.2944965872787417,
-    "practice_problems": 0.06317366645618931
+    "attendance": 0.08075200728933364,
+    "previous_gpa": 0.2119023766349347,
+    "study_hours": 0.19667616447858843,
+    "assignment_completion": 0.08456101438551904,
+    "participation_score": 0.06423682950691371,
+    "sleep_hours": 0.025217963313655157,
+    "practice_test_score": 0.27720054371586894,
+    "practice_problems": 0.05945310067518635
   },
   "all_results": [
     {
       "name": "Linear Regression",
-      "rmse": 5.2045,
-      "mae": 4.1576,
-      "r2": 0.7422
+      "rmse": 5.2038,
+      "mae": 4.1564,
+      "r2": 0.77
     },
     {
       "name": "Random Forest",
-      "rmse": 5.8768,
-      "mae": 4.5686,
-      "r2": 0.6713
+      "rmse": 5.9688,
+      "mae": 4.6411,
+      "r2": 0.6974
     },
     {
       "name": "Gradient Boosting",
-      "rmse": 5.6775,
-      "mae": 4.4519,
-      "r2": 0.6933
+      "rmse": 5.4893,
+      "mae": 4.3354,
+      "r2": 0.744
     }
   ]
 }

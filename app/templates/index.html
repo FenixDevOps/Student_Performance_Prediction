@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 Student Performance Analytics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1, 1000000) | random }}">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dark-mode">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>🎓 Student<br>Analytics</h1>
+        </div>
+        <nav class="nav-menu">
+            <button class="nav-item active" data-page="predict">🎯 Predict Performance</button>
+            <button class="nav-item" data-page="dashboard">📊 Analytics Dashboard</button>
+            <button class="nav-item" data-page="history">📁 Student History</button>
+        </nav>
+        <div class="sidebar-footer">
+            <div id="model-info" class="model-badge">
+                <span class="info-label">MODEL INFO</span>
+                <div class="badge-item"><span>Algorithm:</span> <strong id="model-algo">—</strong></div>
+                <div class="badge-item"><span>R² Score:</span> <strong id="model-r2">—</strong></div>
+                <div class="badge-item"><span>RMSE:</span> <strong id="model-rmse">—</strong></div>
+            </div>
+            <p class="version">v1.0 · Flask + Vanilla JS</p>
+        </div>
+    </aside>
+
+    <main class="content">
+        <!-- Predict Page -->
+        <section id="predict-page" class="page active">
+            <header class="pg-header">
+                <h1>🎯 Performance Predictor</h1>
+                <p>Enter student academic details to get an AI-powered exam score prediction with personalised insights.</p>
+            </header>
+
+            <form id="prediction-form" class="card form-card">
+                <h3 class="section-title">👤 STUDENT INFORMATION</h3>
+                <div class="form-group">
+                    <label for="student_name">Student Name</label>
+                    <input type="text" id="student_name" placeholder="e.g. Rahul Sharma" required>
+                </div>
+
+                <h3 class="section-title">📋 ACADEMIC FEATURES</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="attendance">🏫 Attendance (%): <span id="val-attendance">80</span>%</label>
+                        <input type="range" id="attendance" min="0" max="100" value="80">
+                    </div>
+                    <div class="form-group">
+                        <label for="previous_gpa">📈 Previous GPA (0.0–10.0)</label>
+                        <input type="number" id="previous_gpa" min="0" max="10" step="0.1" value="7.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="study_hours">📚 Study Hours per Week: <span id="val-study_hours">15</span> hrs</label>
+                        <input type="range" id="study_hours" min="0" max="40" value="15">
+                    </div>
+                    <div class="form-group">
+                        <label for="assignment_completion">✅ Assignment Completion (%): <span id="val-assignment_completion">75</span>%</label>
+                        <input type="range" id="assignment_completion" min="0" max="100" value="75">
+                    </div>
+                    <div class="form-group">
+                        <label for="participation_score">🙋 Class Participation (1–10): <span id="val-participation_score">6</span></label>
+                        <input type="range" id="participation_score" min="1" max="10" value="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="sleep_hours">😴 Sleep Hours per Day: <span id="val-sleep_hours">7</span> hrs</label>
+                        <input type="range" id="sleep_hours" min="3" max="12" value="7">
+                    </div>
+                    <div class="form-group">
+                        <label for="practice_test_score">📝 Practice Test Score (0–100): <span id="val-practice_test_score">65</span>%</label>
+                        <input type="range" id="practice_test_score" min="0" max="100" value="65">
+                    </div>
+                    <div class="form-group">
+                        <label for="practice_problems">🧮 Practice Problems Completed</label>
+                        <input type="number" id="practice_problems" min="0" max="500" step="5" value="60">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">🔮 Predict Performance</button>
+            </form>
+
+            <div id="results-container" class="hidden">
+                <hr class="divider">
+                <h3 class="section-title">📊 Prediction Results</h3>
+                <div class="results-grid">
+                    <div class="result-card score-hero">
+                        <span class="snum" id="res-score">—</span>
+                        <span class="slbl">Predicted Exam Score</span>
+                    </div>
+                    <div id="res-badge" class="result-card lvl-badge">
+                        <span class="lemoji" id="res-emoji">👤</span>
+                        <span class="lname" id="res-level">Pending</span>
+                        <span class="lsub">Performance Level</span>
+                    </div>
+                    <div class="result-card insight-box">
+                        <p id="res-summary">Enter details to see insights.</p>
+                    </div>
+                </div>
+
+                <div class="card chart-card">
+                    <h3 class="section-title">🕸️ Feature Radar Chart</h3>
+                    <div class="canvas-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="analysis-grid">
+                    <div class="card">
+                        <h3 class="section-title">✅ Strengths</h3>
+                        <div id="res-strengths" class="tag-container"></div>
+                    </div>
+                    <div class="card">
+                        <h3 class="section-title">⚠️ Needs Improvement</h3>
+                        <div id="res-weaknesses" class="tag-container"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="section-title">🚀 Personalised Recommendations</h3>
+                    <div id="res-recommendations" class="recommendations-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Page -->
+        <section id="dashboard-page" class="page">
+            <header class="pg-header">
+                <h1>📊 Analytics Dashboard</h1>
+                <p>Explore combined stats and performance distributions across all recorded students.</p>
+            </header>
+            <div id="stats-grid" class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Total Records</span>
+                    <span id="stat-total" class="stat-value">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Average Score</span>
+                    <span id="stat-avg" class="stat-value">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Max Score</span>
+                    <span id="stat-max" class="stat-value">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Min Score</span>
+                    <span id="stat-min" class="stat-value">0</span>
+                </div>
+            </div>
+            <div class="dashboard-grid">
+                <div class="card chart-card">
+                    <h3 class="section-title">🏷️ Performance Distribution</h3>
+                    <div class="canvas-container">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+                <div class="card chart-card">
+                    <h3 class="section-title">📈 Predicted Scores Over Time</h3>
+                    <div class="canvas-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Page -->
+        <section id="history-page" class="page">
+            <header class="pg-header">
+                <h1>📁 Student History</h1>
+                <p>Manage and search past prediction records.</p>
+            </header>
+            <div class="card filter-card">
+                <div class="filter-group">
+                    <input type="text" id="history-search" placeholder="Search by name...">
+                    <select id="history-level-filter">
+                        <option value="All">All Performance Levels</option>
+                        <option value="Excellent">Excellent</option>
+                        <option value="Good">Good</option>
+                        <option value="Average">Average</option>
+                        <option value="At Risk">At Risk</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card table-card">
+                <div class="table-wrapper">
+                    <table id="history-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Predicted Score</th>
+                                <th>Level</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}?v={{ range(1, 1000000) | random }}"></script>
+</body>
+</html>
