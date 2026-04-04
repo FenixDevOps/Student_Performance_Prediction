@@ -1,20 +1,33 @@
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
 import os
 import sys
 
-# Add the project root to sys.path to import src modules
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
+# ── LOGGING & ERROR CATCHING (TOP OF FILE) ──────────────────────────
+try:
+    print(">>> APP STARTING: INITIALIZING PATHS...")
+    ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    if ROOT not in sys.path:
+        sys.path.insert(0, ROOT)
+    print(f">>> ROOT PATH SET TO: {ROOT}")
+except Exception as e:
+    print(f">>> PATH INITIALIZATION FAILED: {str(e)}")
 
-from src.predict import predict_single, load_meta, FEATURE_COLS
-from src.recommendations import analyse
-from src.db_manager import (
-    init_db, insert_prediction, search_records,
-    get_student_trend, get_summary_stats, delete_record
-)
-from src.train_model import train, MODEL_PATH
+from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
+
+try:
+    from src.predict import predict_single, load_meta, FEATURE_COLS
+    from src.recommendations import analyse
+    from src.db_manager import (
+        init_db, insert_prediction, search_records,
+        get_student_trend, get_summary_stats, delete_record
+    )
+    from src.train_model import train, MODEL_PATH
+    print(">>> ALL MODULES IMPORTED SUCCESSFULLY.")
+except Exception as e:
+    print(">>> MODULE IMPORT ERROR:")
+    print(str(e))
+    import traceback
+    traceback.print_exc()
 
 app = Flask(__name__, 
             static_folder='static',
