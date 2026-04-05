@@ -38,7 +38,11 @@ try:
     if not model_meta and not os.path.exists(MODEL_PATH):
         print("Model not found. Training model locally...")
         model_meta = train()
-    print("Model loaded/trained successfully.")
+        
+    # Pre-warm the model into memory so the first request is instant
+    from src.predict import load_model as _load_model
+    _load_model()
+    print("Model loaded/trained and cached in memory successfully.")
 except Exception as e:
     print("-" * 30)
     print("CRITICAL STARTUP ERROR:")

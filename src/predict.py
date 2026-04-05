@@ -49,14 +49,20 @@ def get_performance_level(score: float) -> tuple[str, str]:
     return "At Risk", "🚨"
 
 
+_cached_model = None
+
 def load_model():
-    """Load the saved model pipeline from disk."""
+    """Load the saved model pipeline from disk. Cached in memory after first load."""
+    global _cached_model
+    if _cached_model is not None:
+        return _cached_model
     if not os.path.exists(MODEL_PATH):
         raise FileNotFoundError(
             f"Model not found at '{MODEL_PATH}'. "
             "Run `python src/train_model.py` first."
         )
-    return joblib.load(MODEL_PATH)
+    _cached_model = joblib.load(MODEL_PATH)
+    return _cached_model
 
 
 def load_meta() -> dict:
