@@ -66,8 +66,11 @@ def predict():
         score = result['predicted_score']
         level = result['performance_level']
         
-        # Save to database
-        insert_prediction(student_name, features, score, level)
+        # Save to database — isolated so a DB error never blocks the result
+        try:
+            insert_prediction(student_name, features, score, level)
+        except Exception as db_err:
+            print(f"[WARN] DB save failed (result still returned): {db_err}")
         
         # Get recommendations
         analysis = analyse(features, score)
@@ -83,6 +86,8 @@ def predict():
             'features': features
         })
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/stats', methods=['GET'])

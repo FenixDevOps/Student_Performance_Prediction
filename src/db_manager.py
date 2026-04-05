@@ -44,29 +44,32 @@ def init_db() -> None:
         # MongoDB creates collections automatically on first insert
         pass
     else:
-        # SQLite syntax
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS predictions (
-                id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-                student_name          TEXT    NOT NULL,
-                attendance            REAL,
-                previous_gpa          REAL,
-                study_hours           REAL,
-                assignment_completion REAL,
-                participation_score   REAL,
-                sleep_hours           REAL,
-                practice_test_score   REAL,
-                practice_problems     INTEGER,
-                predicted_score       REAL,
-                performance_level     TEXT,
-                timestamp             TEXT
-            )
-        """)
-        conn.commit()
-        cur.close()
-        conn.close()
+        # SQLite syntax - wrapped in try-except in case filesystem is read-only (Render)
+        try:
+            conn = get_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS predictions (
+                    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+                    student_name          TEXT    NOT NULL,
+                    attendance            REAL,
+                    previous_gpa          REAL,
+                    study_hours           REAL,
+                    assignment_completion REAL,
+                    participation_score   REAL,
+                    sleep_hours           REAL,
+                    practice_test_score   REAL,
+                    practice_problems     INTEGER,
+                    predicted_score       REAL,
+                    performance_level     TEXT,
+                    timestamp             TEXT
+                )
+            """)
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            print(f"[WARN] SQLite init failed (no MONGO_URI set, running without persistence): {e}")
 
 def insert_prediction(student_name: str, features: dict, predicted_score: float, performance_level: str) -> str:
     init_db()
