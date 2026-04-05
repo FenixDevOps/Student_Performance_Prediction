@@ -15,6 +15,12 @@ except Exception as e:
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 
+# --- DATABASE & ML LOGIC ---
+from src.db_manager import init_db, insert_prediction, get_summary_stats, search_records
+from src.predict import load_meta, predict_single, FEATURE_COLS, MODEL_PATH
+from src.train_model import train
+from src.recommendations import analyse
+
 app = Flask(__name__, 
             static_folder='static',
             template_folder='templates')
