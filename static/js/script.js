@@ -1,4 +1,30 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ── LOADING SPLASH ──────────────────────────────────────────────────
+    const splash = document.getElementById('loading-splash');
+    const maxWait = 90;  // seconds
+    let waited = 0;
+
+    async function waitForServer() {
+        try {
+            const res = await fetch('/api/ping', { cache: 'no-store' });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                splash.classList.add('hidden');
+                setTimeout(() => splash.remove(), 700);
+                return;
+            }
+        } catch (_) {}
+        waited += 3;
+        if (waited < maxWait) {
+            setTimeout(waitForServer, 3000);
+        } else {
+            // Show anyway after timeout
+            splash.classList.add('hidden');
+            setTimeout(() => splash.remove(), 700);
+        }
+    }
+    waitForServer();
+
     // ── STATE ───────────────────────────────────────────────────────────
     let currentRadarChart = null;
     let distributionChart = null;
