@@ -148,9 +148,10 @@ def ping():
 @app.route('/api/predict', methods=['POST'])
 def predict():
     try:
-        data = request.json
+        # force=True ignores Content-Type header; silent=True returns None instead of raising 400
+        data = request.get_json(force=True, silent=True)
         if not data:
-            return jsonify({'error': 'No JSON body received'}), 400
+            return jsonify({'error': 'No JSON body received. Ensure Content-Type is application/json.'}), 400
         student_name = data.get('student_name', 'Unknown Student')
         features = {col: data.get(col) for col in FEATURE_COLS}
         if any(v is None for v in features.values()):
