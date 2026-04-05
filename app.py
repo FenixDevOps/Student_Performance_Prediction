@@ -122,18 +122,30 @@ application = app  # Gunicorn alias
 CORS(app)
 
 # ── STARTUP ───────────────────────────────────────────────────────────────────
-print("Pre-initialization: Training model and initializing database...")
+print("Pre-initialization: Loading model and initializing database...")
 try:
     init_db()
     print("Database initialized.")
 except Exception as e:
     print(f"[WARN] DB init failed (continuing anyway): {e}")
 
+MODEL_FILE = os.path.join(ROOT, 'models', 'model.pkl')
+META_FILE  = os.path.join(ROOT, 'models', 'model_meta.json')
+
 try:
-    _model, _model_meta = _train_model()
-    print("Model ready.")
+    if os.path.exists(MODEL_FILE):
+        print("[startup] Loading pre-trained model from disk...")
+        _model = joblib.load(MODEL_FILE)
+        if os.path.exists(META_FILE):
+            import json as _json
+            with open(META_FILE) as f:
+                _model_meta = _json.load(f)
+        print(f"[startup] Model loaded instantly ✓  R²={_model_meta.get('r2','?')}")
+    else:
+        print("[startup] No pre-trained model found — training now...")
+        _model, _model_meta = _train_model()
 except Exception as e:
-    print(f"[ERROR] Model training FAILED: {e}")
+    print(f"[ERROR] Model load/train FAILED: {e}")
     import traceback; traceback.print_exc()
 
 # ── ROUTES ────────────────────────────────────────────────────────────────────

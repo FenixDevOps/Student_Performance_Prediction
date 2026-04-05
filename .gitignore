@@ -32,8 +32,6 @@ venv.bak/
 
 # Project Specific
 database/student_history.db
-models/*.joblib
-models/*.json
 error.log
 tmp/
 .DS_Store
