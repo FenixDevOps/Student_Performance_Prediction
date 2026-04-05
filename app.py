@@ -24,7 +24,7 @@ from sklearn.pipeline import Pipeline
 
 from src.db_manager import (
     init_db, insert_prediction, get_analytics,
-    get_summary_stats, search_records, delete_record
+    search_records, delete_record, seed_db, clear_db
 )
 from src.recommendations import analyse
 
@@ -97,7 +97,7 @@ CORS(app)
 # ── STARTUP ───────────────────────────────────────────────────────────────────
 log.info("=== STARTUP ===")
 try:
-    init_db()
+    init_db()  # This now handles auto-seeding
 except Exception as e:
     log.warning(f"DB init warning: {e}")
 
@@ -109,15 +109,13 @@ try:
         if os.path.exists(META_FILE):
             with open(META_FILE) as f:
                 _model_meta = json.load(f)
-        # patch in aliases for frontend
         _model_meta.setdefault("algorithm", _model_meta.get("model_name", "Linear Regression"))
         _model_meta.setdefault("version", "v2.0")
-        log.info(f"Model loaded from disk ✓  R²={_model_meta.get('r2','?')}")
+        log.info(f"Model loaded from disk ✓")
     else:
         _model, _model_meta = _train_model()
 except Exception as e:
     log.error(f"Model load failed: {e}")
-    import traceback; traceback.print_exc()
 
 # ── ROUTES ────────────────────────────────────────────────────────────────────
 
@@ -138,24 +136,17 @@ def model_info():
 def predict():
     try:
         data = request.get_json(force=True, silent=True)
-        if not data:
-            return jsonify({'error': 'No JSON body received.'}), 400
+        if not data: return jsonify({'error': 'No JSON body received.'}), 400
 
         student_name = str(data.get('student_name', 'Unknown')).strip() or 'Unknown'
         features = {col: data.get(col) for col in FEATURE_COLS}
-        missing  = [k for k, v in features.items() if v is None]
-        if missing:
-            return jsonify({'error': f'Missing fields: {", ".join(missing)}'}), 400
-
-        features = {k: float(v) if k != 'practice_problems' else int(v)
-                    for k, v in features.items()}
+        features = {k: float(v) if k != 'practice_problems' else int(v) for k, v in features.items()}
 
         result   = predict_single(features)
         score    = result['predicted_score']
         level    = result['performance_level']
         analysis = analyse(features, score)
 
-        # ── Save EVERYTHING to DB ──────────────────────────────────────────────
         try:
             insert_prediction(
                 student_name     = student_name,
@@ -170,34 +161,23 @@ def predict():
         except Exception as db_err:
             log.warning(f"DB save warning: {db_err}")
 
-        log.info(f"Prediction: '{student_name}' → {score} ({level})")
         return jsonify({
-            'score':           score,
-            'level':           level,
-            'emoji':           result['performance_emoji'],
-            'summary':         analysis.summary,
-            'strengths':       analysis.strengths,
-            'weaknesses':      analysis.weaknesses,
-            'recommendations': analysis.recommendations,
-            'features':        features,
+            'score': score, 'level': level, 'emoji': result['performance_emoji'],
+            'summary': analysis.summary, 'strengths': analysis.strengths,
+            'weaknesses': analysis.weaknesses, 'recommendations': analysis.recommendations,
+            'features': features,
         })
-
     except Exception as e:
         log.error(f"Predict error: {e}")
-        import traceback; traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/analytics')
-@app.route('/api/stats')
 def analytics():
     try:
         return jsonify(get_analytics())
     except Exception as e:
         log.warning(f"Analytics error: {e}")
-        return jsonify({
-            'total':0,'avg_score':0,'max_score':0,'min_score':0,
-            'excellent':0,'good':0,'average':0,'at_risk':0,'recent_scores':[]
-        })
+        return jsonify({'total':0,'avg_score':0,'max_score':0,'min_score':0,'recent_scores':[]})
 
 @app.route('/api/history')
 def history():
@@ -217,7 +197,22 @@ def delete_history(record_id):
         delete_record(record_id)
         return jsonify({'success': True, 'deleted_id': record_id})
     except Exception as e:
-        log.warning(f"Delete error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/seed-data', methods=['POST'])
+def seed_data():
+    try:
+        count = seed_db(force=True)
+        return jsonify({'success': True, 'count': count, 'message': f'Seeded {count} records.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/clear-data', methods=['DELETE'])
+def clear_data():
+    try:
+        count = clear_db()
+        return jsonify({'success': True, 'count': count, 'message': f'Removed {count} records.'})
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

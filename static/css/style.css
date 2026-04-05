@@ -368,7 +368,41 @@ tr:hover td { background-color: rgba(255,255,255,0.02); }
     white-space: nowrap;
 }
 .btn-delete:hover:not(:disabled) { background: #7f1d1d; color: white; }
-.btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary:disabled, .btn-danger:disabled, .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Small buttons for sidebars */
+.btn-secondary-sm, .btn-danger-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    width: 100%;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.btn-secondary-sm {
+    background: var(--slate-700);
+    color: var(--slate-200);
+    border-color: var(--slate-600);
+}
+.btn-secondary-sm:hover { background: var(--slate-600); }
+
+.btn-danger-sm {
+    background: rgba(220, 38, 38, 0.1);
+    color: #f87171;
+    border-color: rgba(220, 38, 38, 0.2);
+}
+.btn-danger-sm:hover { background: rgba(220, 38, 38, 0.2); border-color: rgba(220, 38, 38, 0.4); }
+
+.admin-actions {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--slate-800);
+}
 
 /* ═══════════════════════════════════════════════════════
    RESPONSIVE — TABLET

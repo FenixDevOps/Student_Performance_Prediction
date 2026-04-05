@@ -35,13 +35,17 @@
         <button class="nav-item" data-page="history">📁 Student History</button>
     </nav>
     <div class="sidebar-footer">
+        <div class="admin-actions">
+            <button id="load-demo-btn" class="btn btn-secondary-sm">📦 Load Demo Data</button>
+            <button id="clear-all-btn" class="btn btn-danger-sm">🗑️ Clear All Data</button>
+        </div>
         <div class="model-badge">
             <span class="info-label">MODEL INFO</span>
             <div class="badge-item"><span>Algorithm:</span> <strong id="model-algo">—</strong></div>
             <div class="badge-item"><span>R² Score:</span>  <strong id="model-r2">—</strong></div>
             <div class="badge-item"><span>RMSE:</span>      <strong id="model-rmse">—</strong></div>
         </div>
-        <p class="version">v2.0 · Flask + MongoDB</p>
+        <p class="version">v2.0 · Flask + Persistent Storage</p>
     </div>
 </aside>
 
