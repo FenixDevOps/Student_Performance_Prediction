@@ -1,9 +1,9 @@
-# Deployment Guide - Student Performance Analytics (Final Edition)
+# Deployment Guide - Student Performance Analytics (MongoDB Edition)
 
-Your project has been simplified to a **flat structure** (no subfolders for the main app) to ensure 100% compatibility with Render's Free tier.
+Your project now uses **MongoDB Atlas** for data storage, offering a robust and scalable solution for your analytics!
 
 ## 1. Sync Your Code
-I have already pushed these changes to your GitHub! 
+Ensure all local changes are pushed to your GitHub!
 
 ## 2. Updated Render Settings
 Go to your **Web Service** on Render and ensure these fields match exactly:
@@ -14,16 +14,20 @@ Go to your **Web Service** on Render and ensure these fields match exactly:
 | **Start Command** | `gunicorn app:app` |
 
 ## 3. Environment Variable (Crucial)
-Ensure you have added your Supabase URL in the **Environment** section:
-- **Key**: `DATABASE_URL`
-- **Value**: `postgresql://postgres:Soumya%401820@db.hoeochjdnluzymbdnsza.supabase.co:5432/postgres`
-  *(Note: I encoded the `@` in your password as `%40` to prevent connection errors).*
+You must switch from `DATABASE_URL` to `MONGO_URI`.
+
+1. Go to the **Environment** tab on Render.
+2. DELETE the old `DATABASE_URL`.
+3. ADD a new Environment Variable:
+   - **Key**: `MONGO_URI`
+   - **Value**: `mongodb+srv://<username>:<password>@cluster0.hoeochj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+   *(Replace `<username>` and `<password>` with your MongoDB Atlas credentials).*
 
 ---
 
-### **Why this fixes the "Status 1" error:**
--   **No more folder path issues**: By moving `app.py` to the main folder, Render can find it instantly.
--   **Stable Python**: I added a `runtime.txt` file to force Render to use Python 3.11.
--   **Diagnostic Logs**: If it still fails, the logs will now show a very clear message starting with **`>>>`** explaining the exact line that failed.
+### **Why this fixes your deployment:**
+- **Flexible Schema**: MongoDB handles the student prediction data more gracefully than SQL, especially for nested analytics.
+- **Stable Connection**: The `pymongo[srv]` driver is specifically optimized for cloud connections (Atlas).
+- **Reduced Latency**: MongoDB Atlas naturally pairs well with Render's hosting regions.
 
-**You are ready to launch! Just update the Start Command on Render and it should work.**
+**You are ready to launch! Just update the environment variables on Render and it will work.**

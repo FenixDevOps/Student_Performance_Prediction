@@ -24,6 +24,7 @@ from src.recommendations import analyse
 app = Flask(__name__, 
             static_folder='static',
             template_folder='templates')
+application = app  # For Gunicorn alias
 CORS(app)
 
 # Global metadata and Initialization
