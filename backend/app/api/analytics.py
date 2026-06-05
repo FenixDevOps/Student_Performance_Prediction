@@ -37,12 +37,19 @@ def get_dashboard_analytics(
                 "max_score": 0.0,
                 "min_score": 0.0,
                 "latest_score": 0.0,
+                "performance_level": "Average",
+                "risk_level": "Low",
+                "confidence_score": 0.0,
                 "history": [],
-                "benchmarks": {
+                "current_metrics": {
                     "attendance": 0,
                     "study_hours": 0,
                     "sleep_hours": 0,
-                    "assignment_completion": 0
+                    "assignment_completion": 0,
+                    "practice_test_score": 0,
+                    "practice_problems": 0,
+                    "previous_gpa": 0.0,
+                    "participation_score": 0
                 }
             }
             

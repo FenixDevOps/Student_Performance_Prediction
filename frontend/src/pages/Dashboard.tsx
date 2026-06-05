@@ -105,6 +105,29 @@ export const Dashboard: React.FC = () => {
     const sd = analytics;
     const metrics = sd.current_metrics;
 
+    if (!metrics || sd.total === 0) {
+      return (
+        <div className="max-w-2xl mx-auto text-center py-16 px-4 space-y-6">
+          <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-500 dark:bg-blue-950/30 dark:text-blue-400 flex items-center justify-center mx-auto">
+            <BookOpen className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-foreground">Welcome to your Student Portal, {user?.full_name}!</h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+              Your teachers have not submitted any academic evaluation reports for you yet. 
+              Once a teacher performs a performance prediction for you, your grades, academic risk metrics, and custom study roadmap will appear here.
+            </p>
+          </div>
+          <div className="pt-2">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-muted-foreground text-xs font-medium border border-border">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              Awaiting first evaluation
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const riskStyles: Record<string, string> = {
       High: 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300',
       Medium: 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300',
