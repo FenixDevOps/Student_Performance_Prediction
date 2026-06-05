@@ -38,6 +38,33 @@ def startup_db_and_ml():
     print("[Startup] Initializing SQLite tables...")
     Base.metadata.create_all(bind=engine)
     
+    # Run database migration check to add gamification columns to users table
+    db = SessionLocal()
+    try:
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.bind)
+        columns = [col['name'] for col in inspector.get_columns('users')]
+        engine_name = db.bind.dialect.name
+        
+        if 'xp_points' not in columns:
+            print("[Startup] [MIGRATION] Adding 'xp_points' column to 'users'")
+            db.execute(text("ALTER TABLE users ADD COLUMN xp_points INTEGER DEFAULT 0"))
+        if 'current_streak' not in columns:
+            print("[Startup] [MIGRATION] Adding 'current_streak' column to 'users'")
+            db.execute(text("ALTER TABLE users ADD COLUMN current_streak INTEGER DEFAULT 0"))
+        if 'last_task_completed_at' not in columns:
+            print("[Startup] [MIGRATION] Adding 'last_task_completed_at' column to 'users'")
+            if engine_name == 'postgresql':
+                db.execute(text("ALTER TABLE users ADD COLUMN last_task_completed_at TIMESTAMP"))
+            else:
+                db.execute(text("ALTER TABLE users ADD COLUMN last_task_completed_at DATETIME"))
+        db.commit()
+    except Exception as migration_err:
+        print(f"[Startup] [MIGRATION WARNING] Database columns migration check failed: {str(migration_err)}")
+        db.rollback()
+    finally:
+        db.close()
+        
     # Auto-seeding
     db = SessionLocal()
     try:
