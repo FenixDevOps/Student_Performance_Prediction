@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { predictionService } from '../services/api';
+import { PredictionRecord } from '../types';
 import { useToast } from '../hooks/useToast';
 import {
   ArrowLeft,
@@ -15,7 +16,7 @@ export const Results: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const prediction = location.state?.prediction;
+  const prediction = location.state?.prediction as PredictionRecord;
 
   const handleDownloadPdf = async () => {
     if (!prediction) return;
@@ -43,26 +44,34 @@ export const Results: React.FC = () => {
     );
   }
 
-  const levelBadge = {
-    Excellent: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-    Good: 'bg-blue-50 text-blue-700 border border-blue-200',
-    Average: 'bg-amber-50 text-amber-700 border border-amber-200',
-    'At Risk': 'bg-red-50 text-red-700 border border-red-200',
-  }[prediction.performance_level] ?? 'bg-gray-100 text-gray-700 border border-gray-200';
+  const levelBadge = (
+    {
+      Excellent: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+      Good: 'bg-blue-50 text-blue-700 border border-blue-200',
+      Average: 'bg-amber-50 text-amber-700 border border-amber-200',
+      'At Risk': 'bg-red-50 text-red-700 border border-red-200',
+    } as Record<string, string>
+  )[prediction.performance_level] ?? 'bg-gray-100 text-gray-700 border border-gray-200';
 
-  const riskColor = {
-    High: 'text-red-600',
-    Medium: 'text-amber-600',
-    Low: 'text-emerald-600',
-  }[prediction.risk_level] ?? 'text-gray-600';
+  const riskColor = (
+    {
+      High: 'text-red-600',
+      Medium: 'text-amber-600',
+      Low: 'text-emerald-600',
+    } as Record<string, string>
+  )[prediction.risk_level] ?? 'text-gray-600';
 
-  const riskBarColor = {
-    High: 'bg-red-500',
-    Medium: 'bg-amber-500',
-    Low: 'bg-emerald-500',
-  }[prediction.risk_level] ?? 'bg-gray-400';
+  const riskBarColor = (
+    {
+      High: 'bg-red-500',
+      Medium: 'bg-amber-500',
+      Low: 'bg-emerald-500',
+    } as Record<string, string>
+  )[prediction.risk_level] ?? 'bg-gray-400';
 
-  const riskBarWidth = { High: '100%', Medium: '60%', Low: '20%' }[prediction.risk_level] ?? '50%';
+  const riskBarWidth = (
+    { High: '100%', Medium: '60%', Low: '20%' } as Record<string, string>
+  )[prediction.risk_level] ?? '50%';
 
   return (
     <div className="max-w-3xl mx-auto space-y-4">

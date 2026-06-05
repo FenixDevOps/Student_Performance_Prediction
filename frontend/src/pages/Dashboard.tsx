@@ -288,7 +288,7 @@ export const Dashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {td.recent_history.length > 0 ? td.recent_history.map((record: PredictionRecord) => (
+              {td.recent_history.length > 0 ? td.recent_history.map((record) => (
                 <tr key={record.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                   <td className="py-3 px-3 font-medium text-foreground">{record.name}</td>
                   <td className="py-3 px-3 text-center font-semibold text-blue-600">{record.score.toFixed(1)}%</td>
