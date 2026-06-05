@@ -1,8 +1,16 @@
 import axios from 'axios';
 
+// Helper to sanitize and format backend API URL
+const getApiBaseUrl = () => {
+  const envVal = import.meta.env.VITE_API_URL;
+  if (!envVal) return '/api';
+  const cleanVal = envVal.replace(/\/$/, '');
+  return cleanVal.endsWith('/api') ? cleanVal : `${cleanVal}/api`;
+};
+
 // Create Axios Instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -87,7 +95,7 @@ export const predictionService = {
   },
   exportPdfUrl: (id: number) => {
     const token = localStorage.getItem('token');
-    return `${import.meta.env.VITE_API_URL || '/api'}/predict/export/pdf/${id}?token=${token}`;
+    return `${getApiBaseUrl()}/predict/export/pdf/${id}?token=${token}`;
   },
   downloadPdf: async (id: number, studentName: string) => {
     const res = await api.get(`/predict/export/pdf/${id}`, { responseType: 'blob' });
