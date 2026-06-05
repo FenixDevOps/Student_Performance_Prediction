@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
+import { alertsService } from '../services/api';
 import {
   LayoutDashboard,
   UserCheck,
@@ -14,6 +15,7 @@ import {
   Menu,
   X,
   GraduationCap,
+  Bell,
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -36,6 +38,27 @@ export const DashboardLayout: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [alertsDropdownOpen, setAlertsDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    let interval: any;
+    if (user && (user.role === 'teacher' || user.role === 'admin')) {
+      const fetchAlerts = async () => {
+        try {
+          const data = await alertsService.getAlerts();
+          setAlerts(data);
+        } catch (err) {
+          console.error('Failed to fetch alerts in layout:', err);
+        }
+      };
+      fetchAlerts();
+      interval = setInterval(fetchAlerts, 15000); // refresh every 15s
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [user]);
 
   if (!user) return null;
 
@@ -136,16 +159,70 @@ export const DashboardLayout: React.FC = () => {
             <h1 className="text-sm font-semibold text-foreground">{pageTitle}</h1>
           </div>
 
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 rounded-md border border-border hover:bg-muted text-muted-foreground transition-colors"
-            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-          >
-            {theme === 'dark'
-              ? <Sun className="w-4 h-4 text-amber-500" />
-              : <Moon className="w-4 h-4" />
-            }
-          </button>
+          <div className="flex items-center gap-2">
+            {user && (user.role === 'teacher' || user.role === 'admin') && (
+              <div className="relative">
+                <button
+                  onClick={() => setAlertsDropdownOpen(!alertsDropdownOpen)}
+                  className="p-1.5 rounded-md border border-border hover:bg-muted text-muted-foreground transition-colors relative"
+                  title="Risk Alerts"
+                >
+                  <Bell className="w-4 h-4" />
+                  {alerts.length > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white">
+                      {alerts.length}
+                    </span>
+                  )}
+                </button>
+                {alertsDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-72 bg-card border border-border rounded-lg shadow-xl py-2 z-50 text-xs text-foreground animate-in fade-in slide-in-from-top-2">
+                    <div className="px-3 py-1.5 border-b border-border font-semibold text-muted-foreground flex items-center justify-between">
+                      <span>Active Risk Alerts</span>
+                      <span className="text-[10px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded-full dark:bg-red-950/40 dark:text-red-400">
+                        {alerts.length} New
+                      </span>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto">
+                      {alerts.length > 0 ? (
+                        alerts.map(alert => (
+                          <div key={alert.id} className="px-3 py-2 border-b border-border/50 hover:bg-muted/50 transition-colors">
+                            <p className="font-semibold text-foreground">{alert.student_name}</p>
+                            <p className="text-muted-foreground text-[10px] mt-0.5">
+                              Score: {alert.predicted_score.toFixed(1)}% | Attendance: {alert.attendance}%
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-3 py-6 text-center text-muted-foreground">
+                          No active risk alerts.
+                        </div>
+                      )}
+                    </div>
+                    <div className="px-3 pt-2 text-center border-t border-border">
+                      <Link
+                        to="/"
+                        onClick={() => setAlertsDropdownOpen(false)}
+                        className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                      >
+                        View in Dashboard
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-md border border-border hover:bg-muted text-muted-foreground transition-colors"
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            >
+              {theme === 'dark'
+                ? <Sun className="w-4 h-4 text-amber-500" />
+                : <Moon className="w-4 h-4" />
+              }
+            </button>
+          </div>
         </header>
 
         {/* Page Content */}

@@ -6,7 +6,7 @@ from backend.app.core.database import Base, engine, SessionLocal
 from backend.app.database.seed import seed_database
 from backend.app.ml.inference import load_model, load_meta
 
-from backend.app.api import auth, predict, analytics, model
+from backend.app.api import auth, predict, analytics, model, alerts
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -76,6 +76,7 @@ app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Aut
 app.include_router(predict.router, prefix=f"{settings.API_V1_STR}/predict", tags=["Predictions"])
 app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/analytics", tags=["Analytics"])
 app.include_router(model.router, prefix=f"{settings.API_V1_STR}/model", tags=["Model Controls"])
+app.include_router(alerts.router, prefix=f"{settings.API_V1_STR}/alerts", tags=["System Alerts"])
 
 if __name__ == "__main__":
     uvicorn.run("backend.app.main:app", host="0.0.0.0", port=8000, reload=True)

@@ -4,13 +4,16 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Ridge
+from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
 from backend.app.core.config import settings
+from backend.app.core.database import SessionLocal
+from backend.app.database.models import ModelRetrainHistory
 
 FEATURE_COLS = [
     "attendance",
@@ -68,7 +71,7 @@ def generate_synthetic_data(n_samples: int = 1600, random_state: int = 42) -> pd
     return df
 
 def train_and_save_model() -> dict:
-    """Runs full pipeline training, compares multiple models, and persists best one."""
+    """Runs full pipeline training, compares multiple models, and persists them."""
     df = generate_synthetic_data()
     X = df[FEATURE_COLS]
     y = df[TARGET_COL]
@@ -110,6 +113,18 @@ def train_and_save_model() -> dict:
                 random_state=42,
             )),
         ]),
+        "Neural Network": Pipeline([
+            ("scaler", StandardScaler()),
+            ("model", MLPRegressor(
+                hidden_layer_sizes=(64, 32),
+                max_iter=500,
+                random_state=42,
+            )),
+        ]),
+        "Ridge Regression": Pipeline([
+            ("scaler", StandardScaler()),
+            ("model", Ridge(alpha=1.0)),
+        ]),
     }
     
     results = []
@@ -127,6 +142,30 @@ def train_and_save_model() -> dict:
             "r2": r2,
             "pipeline": pipeline
         })
+        
+        # Save each model file separately
+        filename = f"model_{name.lower().replace(' ', '_')}.pkl"
+        path = os.path.join(settings.MODEL_DIR, filename)
+        joblib.dump(pipeline, path)
+        
+    # Log retraining runs to database
+    db = SessionLocal()
+    try:
+        for r in results:
+            log_entry = ModelRetrainHistory(
+                algorithm_name=r["name"],
+                rmse=r["rmse"],
+                mae=r["mae"],
+                r2=r["r2"],
+                samples_count=len(df)
+            )
+            db.add(log_entry)
+        db.commit()
+    except Exception as db_err:
+        print(f"Failed to log retraining history: {str(db_err)}")
+        db.rollback()
+    finally:
+        db.close()
     
     # Select best model by lowest RMSE
     best = min(results, key=lambda r: r["rmse"])
@@ -142,7 +181,7 @@ def train_and_save_model() -> dict:
     else:
         importances = {col: 1.0 / len(FEATURE_COLS) for col in FEATURE_COLS}
         
-    # Save the selected pipeline
+    # Save the selected pipeline as the default active model
     joblib.dump(best_pipeline, settings.MODEL_PATH)
     
     # Save training meta details
@@ -169,3 +208,4 @@ def train_and_save_model() -> dict:
         json.dump(meta, f, indent=2)
         
     return meta
+

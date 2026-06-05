@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON, Boolean
 from sqlalchemy.orm import relationship
 from backend.app.core.database import Base
 
@@ -12,6 +12,11 @@ class User(Base):
     full_name = Column(String, nullable=False)
     role = Column(String, default="student", nullable=False)  # "admin", "teacher", "student"
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Gamification
+    xp_points = Column(Integer, default=0, nullable=False)
+    current_streak = Column(Integer, default=0, nullable=False)
+    last_task_completed_at = Column(DateTime, nullable=True)
 
     # Relationships
     predictions_created = relationship(
@@ -71,3 +76,45 @@ class PredictionRecord(Base):
         back_populates="student_predictions", 
         foreign_keys=[student_id]
     )
+
+class RoadmapTaskState(Base):
+    __tablename__ = "roadmap_task_states"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    prediction_record_id = Column(Integer, ForeignKey("prediction_records.id"), nullable=False)
+    week_number = Column(Integer, nullable=False)
+    task_index = Column(Integer, nullable=False)
+    completed = Column(Boolean, default=False, nullable=False)
+    completed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id])
+    prediction_record = relationship("PredictionRecord", foreign_keys=[prediction_record_id])
+
+class SystemAlert(Base):
+    __tablename__ = "system_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_name = Column(String, nullable=False)
+    predicted_score = Column(Float, nullable=False)
+    attendance = Column(Float, nullable=False)
+    resolved = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+class ModelRetrainHistory(Base):
+    __tablename__ = "model_retrain_histories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    algorithm_name = Column(String, nullable=False)
+    trained_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    rmse = Column(Float, nullable=False)
+    mae = Column(Float, nullable=False)
+    r2 = Column(Float, nullable=False)
+    samples_count = Column(Integer, nullable=False)
+
+class ModelSettings(Base):
+    __tablename__ = "model_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    active_algorithm = Column(String, default="Random Forest", nullable=False)

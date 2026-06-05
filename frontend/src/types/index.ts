@@ -6,6 +6,8 @@ export interface User {
   full_name: string;
   role: UserRole;
   created_at: string;
+  xp_points: number;
+  current_streak: number;
 }
 
 export interface RoadmapWeek {

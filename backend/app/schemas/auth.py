@@ -25,6 +25,8 @@ class UserResponse(BaseModel):
     full_name: str
     role: str
     created_at: datetime
+    xp_points: int = 0
+    current_streak: int = 0
 
     class Config:
         from_attributes = True

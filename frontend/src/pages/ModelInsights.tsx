@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { modelService } from '../services/api';
 import { useToast } from '../hooks/useToast';
+import { useAuth } from '../hooks/useAuth';
 import { ModelInfo } from '../types';
-import { Cpu, CheckCircle, Calendar, Activity } from 'lucide-react';
+import { Cpu, CheckCircle, Calendar, Activity, Loader2, Play, Database, Trash2, RefreshCw } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -15,22 +16,97 @@ import {
 } from 'recharts';
 
 export const ModelInsights: React.FC = () => {
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Admin states
+  const [retrainHistory, setRetrainHistory] = useState<any[]>([]);
+  const [activeAlgo, setActiveAlgo] = useState('');
+  const [retraining, setRetraining] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+
+  const fetchModelData = async () => {
+    try {
+      const data = await modelService.getInfo();
+      setModelInfo(data);
+      setActiveAlgo(data.model_name);
+
+      if (user?.role === 'admin') {
+        const hist = await modelService.getRetrainHistory();
+        setRetrainHistory(hist);
+      }
+    } catch {
+      showToast('Failed to load ML model details.', 'error');
+    }
+  };
+
   useEffect(() => {
     (async () => {
-      try {
-        const data = await modelService.getInfo();
-        setModelInfo(data);
-      } catch {
-        showToast('Failed to load ML model details.', 'error');
-      } finally {
-        setLoading(false);
-      }
+      setLoading(true);
+      await fetchModelData();
+      setLoading(false);
     })();
-  }, []);
+  }, [user?.role]);
+
+  const handleAlgorithmChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const algo = e.target.value;
+    if (!algo) return;
+
+    try {
+      setLoading(true);
+      const res = await modelService.changeActiveAlgorithm(algo);
+      showToast(res.message, 'success');
+      await fetchModelData();
+    } catch (err: any) {
+      showToast(err.response?.data?.detail || 'Failed to switch algorithm.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRetrain = async () => {
+    try {
+      setRetraining(true);
+      showToast('Retraining algorithm candidates on database records...', 'info');
+      const res = await modelService.retrain();
+      showToast(res.message, 'success');
+      await fetchModelData();
+    } catch (err: any) {
+      showToast(err.response?.data?.detail || 'Retraining failed.', 'error');
+    } finally {
+      setRetraining(false);
+    }
+  };
+
+  const handleClearData = async () => {
+    if (!window.confirm('CRITICAL: Delete all historical student evaluations? This action is irreversible.')) return;
+    try {
+      setClearing(true);
+      const res = await modelService.clearData();
+      showToast(res.message, 'success');
+      await fetchModelData();
+    } catch (err: any) {
+      showToast(err.response?.data?.detail || 'Failed to purge data.', 'error');
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const handleSeedData = async () => {
+    try {
+      setSeeding(true);
+      const res = await modelService.seedData();
+      showToast(res.message, 'success');
+      await fetchModelData();
+    } catch (err: any) {
+      showToast(err.response?.data?.detail || 'Failed to seed mock evaluations.', 'error');
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -62,6 +138,14 @@ export const ModelInsights: React.FC = () => {
     .sort((a, b) => b.value - a.value);
 
   const chartColors = ['#3b82f6', '#10b981', '#6366f1', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4', '#14b8a6'];
+
+  const algorithms = [
+    "Linear Regression",
+    "Random Forest",
+    "Gradient Boosting",
+    "Neural Network",
+    "Ridge Regression"
+  ];
 
   return (
     <div className="space-y-4">
@@ -169,11 +253,108 @@ export const ModelInsights: React.FC = () => {
           <div className="p-3 bg-muted/40 border border-border rounded-md space-y-1.5 text-xs text-muted-foreground">
             <p className="font-medium text-foreground text-[11px]">Metrics guide</p>
             <p><strong>R²</strong> — Proportion of variance explained. Higher is better.</p>
-            <p><strong>RMSE</strong> — Root mean squared error. Penalizes large errors. Lower is better.</p>
-            <p><strong>MAE</strong> — Mean absolute error. Average magnitude of errors. Lower is better.</p>
+            <p><strong>RMSE</strong> — Root mean squared error. Lower is better.</p>
+            <p><strong>MAE</strong> — Mean absolute error. Lower is better.</p>
           </div>
         </div>
       </div>
+
+      {/* Admin ML Controls & Logs */}
+      {user?.role === 'admin' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Controls Card */}
+          <div className="card p-5 space-y-5">
+            <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2 flex items-center gap-1.5">
+              <Database className="w-4 h-4 text-blue-500" /> Admin ML Pipeline Controls
+            </h3>
+
+            {/* Algorithm Select */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">Select Active Regressor Algorithm</label>
+              <select
+                value={activeAlgo}
+                onChange={handleAlgorithmChange}
+                className="w-full px-3 py-2 bg-background border border-border rounded-md text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+              >
+                {algorithms.map(algo => (
+                  <option key={algo} value={algo}>{algo}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Retrain Trigger */}
+            <div className="pt-2">
+              <button
+                onClick={handleRetrain}
+                disabled={retraining}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold transition-all shadow-md hover:shadow-blue-500/20 active:scale-[0.98] disabled:opacity-50"
+              >
+                {retraining ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Training Regressors...</>
+                ) : (
+                  <><Play className="w-3.5 h-3.5 fill-white" /> Trigger Pipeline Retraining</>
+                )}
+              </button>
+            </div>
+
+            {/* DB Tools */}
+            <div className="border-t border-border pt-4 space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground">Evaluation Database Utilities</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleClearData}
+                  disabled={clearing}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 border border-red-200 hover:bg-red-50 hover:text-red-700 text-muted-foreground dark:border-red-950 dark:hover:bg-red-950/20 text-xs font-semibold rounded transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Purge Records
+                </button>
+                <button
+                  onClick={handleSeedData}
+                  disabled={seeding}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 border border-border hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold rounded transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Reset Seed
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Training Logs History Card */}
+          <div className="card p-5 flex flex-col h-[320px]">
+            <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2 flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-emerald-500" /> Pipeline Retraining History Logs
+            </h3>
+            <div className="flex-1 overflow-y-auto mt-3 pr-1">
+              {retrainHistory.length > 0 ? (
+                <div className="border border-border/60 rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-muted/30 border-b border-border text-muted-foreground font-semibold">
+                        <th className="py-2 px-3">Selected Algorithm</th>
+                        <th className="py-2 px-3 text-right">Training Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {retrainHistory.map((log) => (
+                        <tr key={log.id} className="border-b border-border/40 hover:bg-muted/10">
+                          <td className="py-2 px-3 font-medium text-foreground">{log.algorithm_name}</td>
+                          <td className="py-2 px-3 text-right text-muted-foreground">
+                            {new Date(log.trained_at).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center text-xs text-muted-foreground italic">
+                  No retraining records log found in DB.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

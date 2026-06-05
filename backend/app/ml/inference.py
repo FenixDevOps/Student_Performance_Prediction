@@ -4,6 +4,8 @@ import joblib
 import numpy as np
 import pandas as pd
 from backend.app.core.config import settings
+from backend.app.core.database import SessionLocal
+from backend.app.database.models import ModelSettings
 
 FEATURE_COLS = [
     "attendance",
@@ -45,33 +47,84 @@ def get_risk_level(score: float, features: dict) -> str:
     else:
         return "Low"
 
+def get_active_model_path_and_name() -> tuple[str, str]:
+    db = SessionLocal()
+    try:
+        setting = db.query(ModelSettings).first()
+        if setting:
+            algorithm = setting.active_algorithm
+            filename = f"model_{algorithm.lower().replace(' ', '_')}.pkl"
+            path = os.path.join(settings.MODEL_DIR, filename)
+            if os.path.exists(path):
+                return path, algorithm
+    except Exception as e:
+        print(f"Failed to query ModelSettings: {str(e)}")
+    finally:
+        db.close()
+    return settings.MODEL_PATH, "Best Model"
+
+def get_feature_importances(pipeline) -> dict:
+    inner_model = pipeline.named_steps["model"]
+    if hasattr(inner_model, "feature_importances_"):
+        return dict(zip(FEATURE_COLS, inner_model.feature_importances_.tolist()))
+    elif hasattr(inner_model, "coef_"):
+        coefs = np.abs(inner_model.coef_)
+        return dict(zip(FEATURE_COLS, (coefs / coefs.sum()).tolist()))
+    else:
+        return {col: 1.0 / len(FEATURE_COLS) for col in FEATURE_COLS}
+
 def load_model():
-    """Load model pipeline from disk and cache it."""
+    """Load active model pipeline from disk and cache it."""
     global _cached_model
     if _cached_model is not None:
         return _cached_model
         
-    if not os.path.exists(settings.MODEL_PATH):
+    path, name = get_active_model_path_and_name()
+    if not os.path.exists(path):
         # Auto-train if model doesn't exist
         from backend.app.ml.pipeline import train_and_save_model
         train_and_save_model()
         
-    _cached_model = joblib.load(settings.MODEL_PATH)
+    _cached_model = joblib.load(path)
     return _cached_model
 
 def load_meta() -> dict:
-    """Load model training metadata and cache it."""
+    """Load model training metadata and cache it, adjusting for active algorithm."""
     global _cached_meta
     if _cached_meta is not None:
         return _cached_meta
         
     if not os.path.exists(settings.META_PATH):
         from backend.app.ml.pipeline import train_and_save_model
-        _cached_meta = train_and_save_model()
+        base_meta = train_and_save_model()
     else:
         with open(settings.META_PATH) as f:
-            _cached_meta = json.load(f)
+            base_meta = json.load(f)
             
+    # Adjust metadata for the active algorithm
+    path, active_name = get_active_model_path_and_name()
+    
+    # Find metrics for active name in all_results
+    active_result = None
+    for res in base_meta.get("all_results", []):
+        if res["name"] == active_name:
+            active_result = res
+            break
+            
+    if active_result:
+        base_meta["model_name"] = active_result["name"]
+        base_meta["rmse"] = active_result["rmse"]
+        base_meta["mae"] = active_result["mae"]
+        base_meta["r2"] = active_result["r2"]
+        
+        # Load model to get its feature importances
+        try:
+            model = load_model()
+            base_meta["feature_importances"] = get_feature_importances(model)
+        except Exception:
+            pass
+            
+    _cached_meta = base_meta
     return _cached_meta
 
 def reset_ml_cache():

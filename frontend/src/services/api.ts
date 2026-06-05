@@ -112,6 +112,28 @@ export const predictionService = {
     link.href = window.URL.createObjectURL(blob);
     link.download = `predictions_export_${new Date().toISOString().slice(0,10)}.xlsx`;
     link.click();
+  },
+  getRoadmapTasks: async () => {
+    const res = await api.get('/predict/roadmap/tasks');
+    return res.data;
+  },
+  toggleRoadmapTask: async (payload: { prediction_id: number; week: number; task_index: number; completed: boolean }) => {
+    const res = await api.put('/predict/roadmap/tasks', payload);
+    return res.data;
+  },
+  chat: async (payload: { prediction_id: number; message: string }) => {
+    const res = await api.post('/predict/chat', payload);
+    return res.data;
+  },
+  uploadBulkCsv: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('/predict/bulk', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
   }
 };
 
@@ -119,6 +141,22 @@ export const predictionService = {
 export const analyticsService = {
   getAnalytics: async () => {
     const res = await api.get('/analytics');
+    return res.data;
+  }
+};
+
+// Alerts API
+export const alertsService = {
+  getAlerts: async () => {
+    const res = await api.get('/alerts');
+    return res.data;
+  },
+  resolveAlert: async (id: number) => {
+    const res = await api.post(`/alerts/${id}/resolve`);
+    return res.data;
+  },
+  sendParentEmail: async (payload: { record_id: number; parent_email: string }) => {
+    const res = await api.post('/alerts/email', payload);
     return res.data;
   }
 };
@@ -139,6 +177,14 @@ export const modelService = {
   },
   seedData: async () => {
     const res = await api.post('/model/seed-data');
+    return res.data;
+  },
+  getRetrainHistory: async () => {
+    const res = await api.get('/model/history');
+    return res.data;
+  },
+  changeActiveAlgorithm: async (active_algorithm: string) => {
+    const res = await api.post('/model/active', { active_algorithm });
     return res.data;
   }
 };
