@@ -12,7 +12,7 @@ PredictGrade is a production-grade web portal built to analyze academic progress
 ![Dashboard Overview](docs/images/dashboard.png)
 
 ### Sign In Screen
-![Sign In Screen](docs/images/login.png)
+![Sign In Screen](docs/images/signin.png)
 
 ---
 
