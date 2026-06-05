@@ -2,7 +2,17 @@
 
 PredictGrade is a production-grade web portal built to analyze academic progress, predict terminal exam performance using regression models, isolate study habit inefficiencies, and generate personalized study roadmaps.
 
-The application features a secure **FastAPI** REST backend paired with a high-fidelity **React + TypeScript + Vite + Tailwind CSS** SPA dashboard.
+🚀 **[Live Production Demo](https://student-performance-prediction-liard.vercel.app/)**
+
+---
+
+## 📸 Screenshots & Live Preview
+
+### Dashboard Overview
+![Dashboard Overview](docs/images/dashboard.png)
+
+### Sign In Screen
+![Sign In Screen](docs/images/login.png)
 
 ---
 
@@ -162,20 +172,75 @@ All data routes are prefixed with `/api` and secured under Bearer JWT authorizat
 
 ---
 
-## 🚀 Deployment Workflows
+## 🔑 Default Credentials
 
-### Docker Container Orchestration (Local Run)
-The application compiles frontend assets and serves them via Nginx alongside the FastAPI server. To spin up the platform in one command:
-```bash
-docker-compose up --build
-```
-* **Frontend Panel**: [http://localhost](http://localhost) (Proxies `/api` calls internally to the backend server)
-* **REST Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
+The seeder initializes default accounts for testing the role-based access privileges:
 
-### Cloud Deployments (Render & Vercel)
-1. **Frontend (Vercel)**: Linked to your GitHub repository. Vercel automatically deploys SPA routing assets. All rewrites in `vercel.json` forward path resolutions to `/index.html` to avoid `404` errors.
-2. **Backend (Render)**: Set context to the root folder, and path to `backend/Dockerfile`. The backend automatically executes database column migrations on startup to keep relational schemas updated without manual intervention.
-3. **Environment Variables**:
-   * `VITE_API_URL`: Configures target endpoint (defaults to `/api` proxying, or the absolute URL of the backend).
-   * `DATABASE_URL`: JDBC connector string (defaults to SQLite, overrides with PostgreSQL URL on Render).
-   * `SECRET_KEY`: JWT signing token.
+| Role | Username | Password | Access Privileges |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@example.com` | `admin123` | Active ML controls, pipeline retraining, database seeder, teacher features |
+| **Teacher** | `teacher@example.com` | `teacher123` | Manual & bulk predictions, analytics graphs, alerts dropdown, parent dispatcher |
+| **Student** | `student@example.com` | `student123` | Gamified stats (Level/XP/Streaks), Kanban checklist, AI study chat companion |
+
+---
+
+## 🚀 How to Run the Project (Step-by-Step)
+
+### Option 1: Quick Local Run (Manual Setup)
+
+Ensure you have **Python 3.10+** and **Node.js 18+** installed.
+
+#### Step 1: Set Up & Start Backend
+1. Open your terminal and navigate to the project root folder:
+   ```bash
+   cd Student_Performance_Prediction
+   ```
+2. Create and activate a python virtual environment:
+   ```bash
+   # Windows:
+   python -m venv venv
+   .\venv\Scripts\activate
+   
+   # macOS/Linux:
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Install the required python dependencies:
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+4. Start the backend server using Uvicorn:
+   ```bash
+   python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+   ```
+   *The Swagger UI documentation is now accessible at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).*
+
+#### Step 2: Set Up & Start Frontend
+1. Open a new, separate terminal window and navigate to the `frontend/` directory:
+   ```bash
+   cd Student_Performance_Prediction/frontend
+   ```
+2. Install the node package dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Vite React development server:
+   ```bash
+   npm run dev
+   ```
+4. Open your web browser and navigate to **[http://localhost:5173](http://localhost:5173)** (or the port shown in your terminal).
+
+---
+
+### Option 2: Running with Docker (Recommended)
+
+Orchestrate the entire platform in a single command using Docker Compose:
+
+1. Ensure **Docker Desktop** is running on your machine.
+2. In the project root directory, run:
+   ```bash
+   docker-compose up --build
+   ```
+3. Once the containers build and boot:
+   * **Frontend Application**: Navigate to **[http://localhost](http://localhost)**.
+   * **FastAPI Backend Swagger**: Navigate to **[http://localhost:8000/docs](http://localhost:8000/docs)**.
