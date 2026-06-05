@@ -1,119 +1,181 @@
 # 🎓 PredictGrade: Student Performance Analytics & Prediction Portal
 
-PredictGrade is a production-grade, high-fidelity SaaS-style web application designed to forecast student exam performance, isolate study habits weaknesses, and deploy interactive gamified study plans. 
+PredictGrade is a production-grade web portal built to analyze academic progress, predict terminal exam performance using regression models, isolate study habit inefficiencies, and generate personalized study roadmaps.
 
-The application utilizes a robust **FastAPI** REST backend paired with a modern, responsive **React + TypeScript + Vite + Tailwind CSS** dashboard.
-
----
-
-## 🌟 Core Modules
-
-### 🎒 1. Gamification & Study Engagement (For Students)
-* **Interactive Kanban Checklist**: Replaces static recommendations with a weekly study milestone list (Weeks 1-4). Checkmark states sync dynamically.
-* **XP & Streak Metrics**: Awards `10 XP` per completed task, and a `50 XP` bonus for completing an entire week. Tracks daily streaks with flame indicators.
-* **AI Study Assistant**: A floating chat widget enabling students to query study tips, Pomodoro setup instructions, or personalized advice regarding their strengths/weaknesses.
-
-### 🍎 2. Academic Risk Alerts & Communication (For Teachers)
-* **Automated Risk Notifications**: Instantly creates a system alert if a student's predicted exam grade falls into the "At Risk" (High Risk) category.
-* **Bell Dropdown Alerts**: Displays unresolved risk alerts globally in the header.
-* **Parent PDF Dispatcher**: Features a quick-action email dispatch modal that sends the student evaluation PDF report card directly to parents/advisors and resolves the alert.
-
-### ⚙️ 3. ML Pipeline Analytics & Seeding (For Admins)
-* **Algorithm Selector**: Switch the active prediction model dynamically on the fly between **Linear Regression**, **Random Forest**, **Gradient Boosting**, **MLP Neural Network**, and **Ridge Regression**.
-* **Model Retraining Controls**: Synchronously retrains all regressors on live database records and logs results.
-* **Seeder & Data Utilities**: Offers buttons to wipe evaluation history or reset db seeder data.
-* **Retraining Audit History Logs**: Keeps an active table log of past retraining runs.
+The application features a secure **FastAPI** REST backend paired with a high-fidelity **React + TypeScript + Vite + Tailwind CSS** SPA dashboard.
 
 ---
 
-## 🗂️ Project Structure
+## 📐 Mathematical Framework & Inference Logic
 
-```text
-Student_Performance_Prediction/
- ├── backend/
- │    ├── Dockerfile
- │    ├── requirements.txt
- │    └── app/
- │         ├── api/            # API routers (auth, predict, analytics, model, alerts)
- │         ├── core/           # Security middlewares, database setup, environment settings
- │         ├── database/       # SQLAlchemy models, SQLite/PostgreSQL seeder
- │         ├── schemas/        # Request/Response validation schemas (Pydantic)
- │         ├── services/       # Report builders (PDF & Excel generators), AI analytics engine
- │         └── ml/             # Regressor candidates, pipeline trainer, dynamic inference
- ├── frontend/
- │    ├── Dockerfile
- │    ├── package.json
- │    ├── tailwind.config.js
- │    └── src/
- │         ├── components/     # Reusable layout fragments, slider fields
- │         ├── context/        # React state contexts (Auth, Theme, Toast)
- │         ├── hooks/          # Custom hooks wrappers (useAuth, useTheme, useToast)
- │         ├── layouts/        # App route layout panels (Sidebar, Headers, Bell Alerts)
- │         ├── pages/          # Home Dashboard, Predict, Analytics, ModelInsights, Profile
- │         └── services/       # Axios client connection instances (api.ts)
- ├── docker-compose.yml
- ├──render.yaml
- ├──student_evaluations_100.csv  # 100 sample records for bulk prediction testing
- └── README.md
+### 1. Grade Prediction Estimation
+Expected exam score ($Y_{pred}$) is estimated using one of the selected regressor candidates trained on student feature matrices:
+* **Linear Regression / Ridge Regressor**: Estimates via a weighted combination of academic and habit coefficients.
+* **Random Forest / Gradient Boosting**: Employs non-linear tree splits to evaluate interaction thresholds.
+* **MLP Neural Network**: Fits a multi-layer perceptron topology utilizing backpropagation.
+
+$$Y_{pred} = f(X_{attendance}, X_{gpa}, X_{study\_hours}, X_{problems}, X_{sleep}, X_{assignments}, X_{participation}, X_{test\_score})$$
+
+### 2. Estimation Confidence Metric
+The portal calculates a confidence rating ($C$) mapping how close the inputs lie to the historical training distribution centroid. It evaluates the scaled Euclidean Z-score distance ($z$) in multi-dimensional space, discounting confidence as outliers deviate:
+
+$$Confidence = R^2 \times e^{-\lambda z} \times 100$$
+
+*Where:*
+* $R^2$: The coefficient of determination of the active ML algorithm (e.g. $0.84$).
+* $z$: The Mahalanobis/Euclidean Z-score distance from the feature centroid.
+* $\lambda$: Exponential decay rate parameter (calibrated at $0.15$).
+
+### 3. Risk Level Classification
+Academic risk is segmented into three tiers:
+* 🔴 **High Risk**: Predicted Final Grade $< 60\%$ OR Attendance Rate $< 75\%$.
+* 🟡 **Medium Risk**: Predicted Final Grade $\ge 60\%$ and $< 75\%$, with Attendance Rate $\ge 75\%$.
+* 🟢 **Low Risk**: Predicted Final Grade $\ge 75\%$ and Attendance Rate $\ge 85\%$.
+
+---
+
+## 📊 Evaluation Feature Definition
+
+Predictions ingest 8 primary features across two categories:
+
+| Feature Column | Description | Range / Domain | Weight Impact |
+| :--- | :--- | :---: | :---: |
+| **`attendance`** | Ratio of lectures attended by the student | `0.0%` - `100.0%` | High |
+| **`previous_gpa`** | Cumulative GPA prior to the current course term | `0.0` - `10.0` | High |
+| **`study_hours`** | Self-reported weekly study allocation | `0.0` - `40.0` hrs | Medium |
+| **`assignment_completion`** | Percentage of coursework assignments submitted | `0.0%` - `100.0%` | Medium |
+| **`participation_score`** | Class interactive engagement score graded by instructor | `0.0` - `10.0` | Low |
+| **`sleep_hours`** | Average hours of nightly rest | `0.0` - `12.0` hrs | Low |
+| **`practice_test_score`** | Score obtained in mock examinations | `0.0%` - `100.0%` | High |
+| **`practice_problems`** | Count of supplementary problems solved | `0` - `200` | Medium |
+
+---
+
+## 🗄️ Database Schema Blueprint
+
+The SQLite/PostgreSQL relational database contains 6 key tables:
+
+```mermaid
+erDiagram
+    users ||--o{ prediction_records : evaluates
+    users ||--o{ roadmap_task_states : tracks
+    prediction_records ||--o{ roadmap_task_states : recommends
+    prediction_records ||--o{ system_alerts : triggers
+    users {
+        int id PK
+        string email UK
+        string hashed_password
+        string full_name
+        string role "admin | teacher | student"
+        datetime created_at
+        int xp_points
+        int current_streak
+        datetime last_task_completed_at
+    }
+    prediction_records {
+        int id PK
+        string student_name
+        float attendance
+        float previous_gpa
+        float study_hours
+        float assignment_completion
+        float participation_score
+        float sleep_hours
+        float practice_test_score
+        int practice_problems
+        float predicted_score
+        string performance_level
+        float confidence_score
+        string risk_level
+        string summary
+        json strengths
+        json weaknesses
+        json recommendations
+        json learning_roadmap
+        datetime created_at
+        int created_by_id FK
+        int student_id FK
+    }
+    roadmap_task_states {
+        int id PK
+        int user_id FK
+        int prediction_record_id FK
+        int week_number
+        int task_index
+        boolean completed
+        datetime completed_at
+    }
+    system_alerts {
+        int id PK
+        string student_name
+        float predicted_score
+        float attendance
+        boolean resolved
+        datetime created_at
+    }
+    model_retrain_histories {
+        int id PK
+        string algorithm_name
+        datetime trained_at
+    }
+    model_settings {
+        int id PK
+        string active_algorithm
+    }
 ```
 
 ---
 
-## 🔑 Default Credentials
+## 🔌 API Endpoint Specifications
 
-The seeder initializes default accounts for testing the role-based views:
+All data routes are prefixed with `/api` and secured under Bearer JWT authorization headers.
 
-| Role | Username | Password | Access Privileges |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin@example.com` | `admin123` | Active ML controls, pipeline retraining, database seeder, teacher features |
-| **Teacher** | `teacher@example.com` | `teacher123` | Manual & bulk predictions, analytics graphs, alerts dropdown, parent dispatch |
-| **Student** | `student@example.com` | `student123` | Gamified stats (Level/XP/Streaks), Kanban checklist, AI study chat companion |
+### Authentication Router (`/api/auth`)
+* `POST /register`: Registers a new account. Returns a user profile payload.
+* `POST /login`: Receives `username` and `password` as url-encoded form data. Returns a JWT access token `{"access_token": "...", "token_type": "bearer"}`.
+* `GET /me`: Returns the current authenticated user's profile and gamification stats.
+* `PUT /profile`: Modifies `full_name`, `email`, or `password` settings.
 
----
+### Predictions Router (`/api/predict`)
+* `POST /predict`: Receives student features. Evaluates prediction metrics and AI roadmap blocks. Returns the record. (Teacher/Admin only)
+* `GET /history`: Returns a list of past evaluations. Students are isolated to their own records; Teachers/Admins can view all records.
+* `GET /record/{id}`: Fetches details of a single report card.
+* `DELETE /record/{id}`: Deletes an evaluation record. (Teacher/Admin only)
+* `GET /export/pdf/{id}`: Streams a dynamic Report PDF download.
+* `GET /export/excel`: Streams history spreadsheet exports. (Teacher/Admin only)
+* `GET /roadmap/tasks`: Returns study plan milestones checklist.
+* `PUT /roadmap/tasks`: Toggles roadmap checkmark state, calculating and awarding XP and Streaks.
+* `POST /chat`: Integrates AI study assistant inquiries.
+* `POST /bulk`: Evaluates multi-student batches from a CSV upload. (Teacher/Admin only)
 
-## 🚀 Local Quick Start
+### System Alerts Router (`/api/alerts`)
+* `GET /`: Returns a list of unresolved high-risk warning alerts. (Teacher/Admin only)
+* `POST /{alert_id}/resolve`: Resolves an alert. (Teacher/Admin only)
+* `POST /email`: Dispatches an evaluation PDF report to parents or advisors. (Teacher/Admin only)
 
-Ensure you have **Python 3.10+** and **Node.js 18+** installed.
-
-### 1. Run Backend REST API
-```bash
-cd Student_Performance_Prediction
-
-# Activate virtual environment (Windows)
-.\venv\Scripts\activate
-# Activate virtual environment (macOS/Linux)
-source venv/bin/activate
-
-# Install requirements
-pip install -r backend/requirements.txt
-
-# Start local server (runs on port 8000)
-python -m uvicorn backend.app.main:app --reload
-```
-> [!NOTE]
-> During startup, FastAPI will automatically generate database tables, apply schema migrations (adding gamification fields if missing), and cache model regressors.
-
-### 2. Run React Frontend
-```bash
-cd Student_Performance_Prediction/frontend
-
-# Install dependencies
-npm install
-
-# Start Vite dev server (runs on port 3000)
-npm run dev
-```
-Open **[http://localhost:3000](http://localhost:3000)** to browse the interface.
+### Model Management Router (`/api/model`)
+* `GET /info`: Fetches active regressor scores, features, and relative importances.
+* `POST /retrain`: Triggers retraining pipeline. (Admin only)
+* `POST /active`: Configures the active pipeline algorithm dynamically. (Admin only)
+* `POST /clear-data`: Purges prediction history records. (Admin only)
+* `POST /seed-data`: Resets prediction seeder data. (Admin only)
 
 ---
 
-## 🐳 Running with Docker
+## 🚀 Deployment Workflows
 
-Orchestrate the entire platform in a single command using Docker Compose:
-
+### Docker Container Orchestration (Local Run)
+The application compiles frontend assets and serves them via Nginx alongside the FastAPI server. To spin up the platform in one command:
 ```bash
-# In the project root, run:
 docker-compose up --build
 ```
-* **Frontend Panel**: [http://localhost](http://localhost) (Served via Nginx)
-* **API Swagger Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs) (Served via FastAPI)
+* **Frontend Panel**: [http://localhost](http://localhost) (Proxies `/api` calls internally to the backend server)
+* **REST Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
+
+### Cloud Deployments (Render & Vercel)
+1. **Frontend (Vercel)**: Linked to your GitHub repository. Vercel automatically deploys SPA routing assets. All rewrites in `vercel.json` forward path resolutions to `/index.html` to avoid `404` errors.
+2. **Backend (Render)**: Set context to the root folder, and path to `backend/Dockerfile`. The backend automatically executes database column migrations on startup to keep relational schemas updated without manual intervention.
+3. **Environment Variables**:
+   * `VITE_API_URL`: Configures target endpoint (defaults to `/api` proxying, or the absolute URL of the backend).
+   * `DATABASE_URL`: JDBC connector string (defaults to SQLite, overrides with PostgreSQL URL on Render).
+   * `SECRET_KEY`: JWT signing token.
