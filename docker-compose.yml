@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: student-prediction-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend-db-volume:/workspace/backend/app/database
+      - backend-model-volume:/workspace/backend/app/ml/model_cache
+    environment:
+      - DATABASE_URL=sqlite:///./backend/app/database/student_performance.db
+      - SECRET_KEY=SUPER_SECRET_STUDENT_PERFORMANCE_PREDICTION_KEY_2026
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: student-prediction-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  backend-db-volume:
+  backend-model-volume:

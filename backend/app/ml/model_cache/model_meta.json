@@ -1,0 +1,81 @@
+{
+  "model_name": "Linear Regression",
+  "rmse": 5.2038,
+  "mae": 4.1564,
+  "r2": 0.77,
+  "feature_cols": [
+    "attendance",
+    "previous_gpa",
+    "study_hours",
+    "assignment_completion",
+    "participation_score",
+    "sleep_hours",
+    "practice_test_score",
+    "practice_problems"
+  ],
+  "feature_importances": {
+    "attendance": 0.08075200728933364,
+    "previous_gpa": 0.2119023766349347,
+    "study_hours": 0.19667616447858843,
+    "assignment_completion": 0.08456101438551904,
+    "participation_score": 0.06423682950691371,
+    "sleep_hours": 0.025217963313655157,
+    "practice_test_score": 0.27720054371586894,
+    "practice_problems": 0.05945310067518635
+  },
+  "feature_stats": {
+    "attendance": {
+      "mean": 70.1551484375,
+      "std": 17.380830097109264
+    },
+    "previous_gpa": {
+      "mean": 5.7560546875,
+      "std": 2.4754080505147953
+    },
+    "study_hours": {
+      "mean": 20.5131171875,
+      "std": 10.981547080454376
+    },
+    "assignment_completion": {
+      "mean": 64.06371874999999,
+      "std": 20.116266285568305
+    },
+    "participation_score": {
+      "mean": 5.59815625,
+      "std": 2.5849297183383966
+    },
+    "sleep_hours": {
+      "mean": 7.023679687500001,
+      "std": 1.711019148782243
+    },
+    "practice_test_score": {
+      "mean": 60.2125859375,
+      "std": 23.4687351109849
+    },
+    "practice_problems": {
+      "mean": 101.296875,
+      "std": 58.453681050739206
+    }
+  },
+  "all_results": [
+    {
+      "name": "Linear Regression",
+      "rmse": 5.2038,
+      "mae": 4.1564,
+      "r2": 0.77
+    },
+    {
+      "name": "Random Forest",
+      "rmse": 5.969,
+      "mae": 4.6411,
+      "r2": 0.6974
+    },
+    {
+      "name": "Gradient Boosting",
+      "rmse": 5.4893,
+      "mae": 4.3354,
+      "r2": 0.744
+    }
+  ],
+  "trained_at": "2026-06-04T23:54:23.094745"
+}
